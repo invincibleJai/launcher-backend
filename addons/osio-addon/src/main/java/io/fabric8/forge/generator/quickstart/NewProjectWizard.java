@@ -72,6 +72,8 @@ public class NewProjectWizard implements UIWizard {
         builder.add(ChooseBoosterStep.class);
 
         builder.add(Fabric8ProjectInfoStep.class);
+        builder.add(Fabric8ProjectInfoStep.class);
+        //builder.add(ChooseBoosterTemp.class);
         builder.add(ChoosePipelineStep.class);
         builder.add(GitHubImportRepoStep.class);
         builder.add(CreateBuildConfigStep.class);

@@ -37,6 +37,7 @@ import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonArray;
 import javax.json.JsonObjectBuilder;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -87,6 +88,9 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
 import static io.fabric8.launcher.web.forge.util.JsonOperations.exceptionToJson;
 import static io.fabric8.launcher.web.forge.util.JsonOperations.unwrapJsonObjects;
 import static javax.json.Json.createObjectBuilder;
+
+
+import javax.json.JsonArray;
 
 @javax.ws.rs.Path("/launchpad")
 @ApplicationScoped
@@ -226,11 +230,122 @@ public class LaunchResource {
             }
             controller.getContext().getAttributeMap().put("action", "next");
             WizardCommandController wizardController = (WizardCommandController) controller;
+
+            JsonArray arr = Json.createArrayBuilder()
+                                .add("step1")
+                                .add("step2")
+                                .add("step3")
+                                .add("step4").build();
+
+            builder.add("state1", Json.createObjectBuilder()
+                                        .add("valid", false)
+                                        .add("canExecute", false)
+                                        .add("wizard", true)
+                                        .add("canMoveToNextStep", true)
+                                        .add("canMoveToPreviousStep", true)
+                                        .add("steps", arr));
+
+            
+            JsonArray arr1 = content.getJsonArray("inputs");
+            System.out.println(arr1);
+            //System.out.println(arr1.length);
+            String namedPrj = "vertx-basic-nov-28-13";
+            String gitOrg = "invincibleJai";
+            String quickstartPrj = "Vert.x HTTP Booster";
+            String kubernetesSpacePrj = "jakumar";
+            String labelSpacePrj = "vertx-basic-nov-28-13";
+            System.out.println("-----size------");
+            System.out.println(arr1.size());
+            for(int i=0; i < arr1.size(); i++) {
+                System.out.println(i);
+                JsonObject jsonobject = arr1.getJsonObject(i);
+                if(jsonobject.getString("name").equals("named")){
+                   namedPrj =  jsonobject.getString("value");
+                   System.out.println("------named prj--------");
+                   System.out.println(namedPrj);
+                }
+                if(jsonobject.getString("name").equals("gitOrganisation")){
+                   gitOrg =  jsonobject.getString("value");
+                   System.out.println("------gitOrg prj--------");
+                   System.out.println(gitOrg);
+                }
+                if(jsonobject.getString("name").equals("quickstart")){
+                   quickstartPrj =  jsonobject.getString("value");
+                   System.out.println("------quickstart prj--------");
+                   System.out.println(quickstartPrj);
+                }
+                if(jsonobject.getString("name").equals("kubernetesSpace")){
+                   kubernetesSpacePrj =  jsonobject.getString("value");
+                   System.out.println("------kubernetesSpace prj--------");
+                   System.out.println(kubernetesSpacePrj);
+                }
+                if(jsonobject.getString("name").equals("labelSpace")){
+                   labelSpacePrj =  jsonobject.getString("value");
+                   System.out.println("------labelSpace prj--------");
+                   System.out.println(labelSpacePrj);
+                }
+            }
+
+            if (stepIndex == 4) {
+                System.out.println("----- inside step 4 -----");
+                content = Json.createObjectBuilder()
+                                .add("state", Json.createObjectBuilder())
+                                .add("stepIndex", 4)
+                                .add("inputs", Json.createArrayBuilder()
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "quickstart")
+                                                            .add("value", quickstartPrj))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "gitOrganisation")
+                                                            .add("value", gitOrg))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "named")
+                                                            .add("value", namedPrj))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "groupId")
+                                                            .add("value", "io.openshift.booster"))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "version")
+                                                            .add("value", "1.0.0-SNAPSHOT"))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "pipeline")
+                                                            .add("value", "Release"))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "kubernetesSpace")
+                                                            .add("value", "jakumar"))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "labelSpace")
+                                                            .add("value", labelSpacePrj))).build();
+            }
+            if (stepIndex == 3) {
+                System.out.println("----- inside step 3 -----");
+                content = Json.createObjectBuilder()
+                                .add("state", Json.createObjectBuilder())
+                                .add("stepIndex", 3)
+                                .add("inputs", Json.createArrayBuilder()
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "quickstart")
+                                                            .add("value", quickstartPrj))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "gitOrganisation")
+                                                            .add("value", gitOrg))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "named")
+                                                            .add("value", namedPrj))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "groupId")
+                                                            .add("value", "io.openshift.booster"))
+                                                    .add(Json.createObjectBuilder()
+                                                            .add("name", "version")
+                                                            .add("value", "1.0.0-SNAPSHOT"))).build();
+            }
             helper.populateController(content, controller);
             for (int i = 0; i < stepIndex; i++) {
                 wizardController.next().initialize();
                 helper.populateController(content, wizardController);
             }
+            
+            
             helper.describeMetadata(builder, controller);
             helper.describeInputs(builder, controller);
             helper.describeCurrentState(builder, controller);
@@ -372,6 +487,88 @@ public class LaunchResource {
         validateCommand(commandName);
         java.nio.file.Path path = Files.createTempDirectory("projectDir");
         try (CommandController controller = getCommand(commandName, path, headers)) {
+            // input harcode
+            System.out.println("----- inside execute -----");
+
+            JsonArray arr1 = content.getJsonArray("inputs");
+            System.out.println(arr1);
+            //System.out.println(arr1.length);
+            String namedPrj = "vertx-basic-nov-28-13";
+            String gitOrg = "invincibleJai";
+            String quickstartPrj = "Vert.x HTTP Booster";
+            String kubernetesSpacePrj = "jakumar";
+            String jenkinsSpacePrj = "jakumar-jenkins";
+            System.out.println("-----size------");
+            System.out.println(arr1.size());
+            for(int i=0; i < arr1.size(); i++) {
+                System.out.println(i);
+                JsonObject jsonobject = arr1.getJsonObject(i);
+                if(jsonobject.getString("name").equals("named")){
+                   namedPrj =  jsonobject.getString("value");
+                   System.out.println("------named prj--------");
+                   System.out.println(namedPrj);
+                }
+                if(jsonobject.getString("name").equals("gitOrganisation")){
+                   gitOrg =  jsonobject.getString("value");
+                   System.out.println("------gitOrg prj--------");
+                   System.out.println(gitOrg);
+                }
+                if(jsonobject.getString("name").equals("quickstart")){
+                   quickstartPrj =  jsonobject.getString("value");
+                   System.out.println("------quickstart prj--------");
+                   System.out.println(quickstartPrj);
+                }
+                if(jsonobject.getString("name").equals("kubernetesSpace")){
+                   kubernetesSpacePrj =  jsonobject.getString("value");
+                   System.out.println("------kubernetesSpace prj--------");
+                   System.out.println(kubernetesSpacePrj);
+                }
+                if(jsonobject.getString("name").equals("jenkinsSpace")){
+                   jenkinsSpacePrj =  jsonobject.getString("value");
+                   System.out.println("------jenkinsSpacePrj prj--------");
+                   System.out.println(jenkinsSpacePrj);
+                }
+            }
+
+
+            content = Json.createObjectBuilder()
+                            .add("state", Json.createObjectBuilder())
+                            .add("stepIndex", 3)
+                            .add("inputs", Json.createArrayBuilder()
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "quickstart")
+                                                        .add("value", quickstartPrj))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "gitOrganisation")
+                                                        .add("value", gitOrg))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "named")
+                                                        .add("value", namedPrj))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "groupId")
+                                                        .add("value", "io.openshift.booster"))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "version")
+                                                        .add("value", "1.0.0-SNAPSHOT"))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "pipeline")
+                                                        .add("value", "Release"))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "kubernetesSpace")
+                                                        .add("value", "jakumar"))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "labelSpace")
+                                                        .add("value", namedPrj))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "jenkinsSpace")
+                                                        .add("value", jenkinsSpacePrj))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "triggerBuild")
+                                                        .add("value", true))
+                                                .add(Json.createObjectBuilder()
+                                                        .add("name", "addCIWebHooks")
+                                                        .add("value", true))).build();
+
             helper.populateControllerAllInputs(content, controller);
             if (controller.isValid()) {
                 Result result = controller.execute();
