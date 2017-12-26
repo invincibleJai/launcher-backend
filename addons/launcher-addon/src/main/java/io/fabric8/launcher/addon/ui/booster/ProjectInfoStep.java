@@ -10,6 +10,7 @@ package io.fabric8.launcher.addon.ui.booster;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,6 +37,8 @@ import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Profile;
+import org.apache.maven.model.Dependency;
+import org.jboss.forge.addon.dependencies.util.Dependencies;
 import org.jboss.forge.addon.maven.resources.MavenModelResource;
 import org.jboss.forge.addon.parser.json.resource.JsonResource;
 import org.jboss.forge.addon.resource.DirectoryResource;
@@ -54,6 +57,24 @@ import org.jboss.forge.addon.ui.util.Categories;
 import org.jboss.forge.addon.ui.util.Metadata;
 import org.jboss.forge.addon.ui.wizard.UIWizardStep;
 import org.jboss.forge.furnace.util.Strings;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Element;
+
+import org.apache.commons.io.IOUtils;
+import java.util.List;
+import org.xml.sax.InputSource;
+import java.io.StringReader;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 
 /**
  * @author <a href="mailto:ggastald@redhat.com">George Gastaldi</a>
@@ -194,6 +215,9 @@ public class ProjectInfoStep implements UIWizardStep {
         Path projectDirectoryPath = projectDirectory.getUnderlyingResourceObject().toPath();
         // Copy contents
         catalog.copy(booster, projectDirectoryPath);
+        System.out.println("@@#@#@#@##");
+        System.out.println(booster);
+        System.out.println("@#@#@#@#@#");
         // Is it a maven project?
         MavenModelResource modelResource = projectDirectory.getChildOfType(MavenModelResource.class, "pom.xml");
 
@@ -231,13 +255,24 @@ public class ProjectInfoStep implements UIWizardStep {
                                                                                           "pom.xml");
                 Model moduleModel = moduleModelResource.getCurrentModel();
                 Parent parent = moduleModel.getParent();
+                List<Dependency> dependencies = moduleModel.getDependencies();
+                Dependency dep = new Dependency();
+                dep.setGroupId("AAA");
+                dep.setArtifactId("BBB");
+                dependencies.add(dep);
+
+                System.out.println(Arrays.asList(dependencies).toString());
+                
                 if (parent != null) {
                     parent.setGroupId(model.getGroupId());
                     parent.setArtifactId(model.getArtifactId());
                     parent.setVersion(model.getVersion());
-                    moduleModelResource.setCurrentModel(moduleModel);
+                    
                 }
+                moduleModelResource.setCurrentModel(moduleModel);
             }
+            // Dependency dep = null;
+              //  moduleModel.getDependencies().add(dep);
             modelResource.setCurrentModel(model);
         }
 
@@ -284,6 +319,45 @@ public class ProjectInfoStep implements UIWizardStep {
                 projectDirectory.getChildOfType(FileResource.class, "README.adoc").setContents(readmeOutput);
                 // Delete README.md
                 projectDirectory.getChildOfType(FileResource.class, "README.md").delete();
+                System.out.println("!!!!!!!!!!!!!!!!!!");
+                String xmlString = projectDirectory.getChildOfType(FileResource.class, "pom.xml").getContents();
+                System.out.println(xmlString);
+                Document doc = DocumentBuilderFactory.newInstance()
+                                     .newDocumentBuilder()
+                                     .parse(new InputSource(new StringReader(xmlString)));
+                System.out.println(doc.getAttributes());
+                NodeList nodeList = doc.getElementsByTagName("dependencies");
+                Node dependencies = nodeList.item(1);
+                Element dep1 = doc.createElement("dependency");
+                Element aGroupId = doc.createElement("groupId");
+                aGroupId.appendChild(doc.createTextNode("AAAAA"));
+
+                Element aartifactId = doc.createElement("artifactId");
+                aartifactId.appendChild(doc.createTextNode("BBBB"));
+
+                dep1.appendChild(aGroupId);
+                dep1.appendChild(aartifactId);
+                 
+                dependencies.appendChild(dep1);
+
+                System.out.println(dependencies.toString());
+
+
+                TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                Transformer transformer = transformerFactory.newTransformer();
+                DOMSource source = new DOMSource(doc);
+                 StringWriter sw = new StringWriter();
+                StreamResult sr = new StreamResult(sw);
+                transformer.transform(source, sr);
+                System.out.println("%%%%%");
+                System.out.println(sw.toString());
+                System.out.println("%%%%%");
+
+
+
+               projectDirectory.getChildOfType(FileResource.class, "pom.xml").setContents(sw.toString());
+                
+                System.out.println("!!!!!!!!!!!!!!!!!!");
             }
         } catch (Exception e) {
             if (e instanceof FileNotFoundException) {
