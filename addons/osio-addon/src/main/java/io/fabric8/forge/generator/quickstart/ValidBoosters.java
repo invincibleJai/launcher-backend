@@ -43,6 +43,8 @@ public class ValidBoosters {
             "vertx-http-",
             "vertx-health-check-",
 
+            "nodejs-crud-",
+
             "does-not-exist-to-make-auto-PRs-easier;)"
     ));
     /**
