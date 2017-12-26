@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 
 import javax.inject.Inject;
 import javax.json.Json;
+import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 
@@ -66,6 +67,8 @@ import org.w3c.dom.Element;
 import org.apache.commons.io.IOUtils;
 import java.util.List;
 import org.xml.sax.InputSource;
+
+
 import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -283,13 +286,31 @@ public class ProjectInfoStep implements UIWizardStep {
                 JsonObjectBuilder job = Json.createObjectBuilder();
                 job.add("name", artifactIdValue);
                 job.add("version", version.getValue());
+                
                 for (Entry<String, JsonValue> entry : packageJsonResource.getJsonObject().entrySet()) {
+                    JsonValue j = entry.getValue();
                     String key = entry.getKey();
                     // Do not copy name or version
                     if (key.equals("name") || key.equals("version")) {
                         continue;
                     }
-                    job.add(key, entry.getValue());
+                    else if (key.equals("dependencies")) {
+                        System.out.println("HHHHHHHHHHH");
+                        System.out.println(entry.getValue());
+                        JsonObject jsonObject = (JsonObject) entry.getValue();
+                        JsonObjectBuilder jb = Json.createObjectBuilder();
+                        
+                        for (Entry<String, JsonValue> dep : jsonObject.entrySet()) {
+                            String k = dep.getKey();
+                            JsonValue v = dep.getValue();
+                            jb.add(k, v);
+                        }
+                        jb.add("fabric8-stack-analysis-ui", "0.1.1");
+                        
+                        j = (JsonValue) jb.build();
+                        //jsonValue.add("fabric8-stack-analysis-ui", "0.1.1");
+                    }
+                    job.add(key, j);
                 }
                 packageJsonResource.setContents(job.build());
             }
