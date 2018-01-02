@@ -24,6 +24,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
+import javax.xml.transform.OutputKeys;
 
 import io.fabric8.launcher.addon.BoosterCatalogFactory;
 import io.fabric8.launcher.addon.ReadmeProcessor;
@@ -351,13 +352,17 @@ public class ProjectInfoStep implements UIWizardStep {
                 Node dependencies = nodeList.item(1);
                 Element dep1 = doc.createElement("dependency");
                 Element aGroupId = doc.createElement("groupId");
-                aGroupId.appendChild(doc.createTextNode("AAAAA"));
+                aGroupId.appendChild(doc.createTextNode("org.springframework.data"));
 
                 Element aartifactId = doc.createElement("artifactId");
-                aartifactId.appendChild(doc.createTextNode("BBBB"));
+                aartifactId.appendChild(doc.createTextNode("spring-data-redis"));
+
+                Element aversion = doc.createElement("version");
+                aversion.appendChild(doc.createTextNode("1.6.2.RELEASE"));
 
                 dep1.appendChild(aGroupId);
                 dep1.appendChild(aartifactId);
+                dep1.appendChild(aversion);
                  
                 dependencies.appendChild(dep1);
 
@@ -366,6 +371,7 @@ public class ProjectInfoStep implements UIWizardStep {
 
                 TransformerFactory transformerFactory = TransformerFactory.newInstance();
                 Transformer transformer = transformerFactory.newTransformer();
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
                 DOMSource source = new DOMSource(doc);
                  StringWriter sw = new StringWriter();
                 StreamResult sr = new StreamResult(sw);
